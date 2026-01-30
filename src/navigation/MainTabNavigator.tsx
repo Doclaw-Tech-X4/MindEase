@@ -1,8 +1,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { TouchableOpacity, Image, View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MainTabParamList, TaskStackParamList, EmailStackParamList, CalendarStackParamList, AnalyticsStackParamList, ProfileStackParamList } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { useDynamicColors } from '../constants/dynamicColors';
 
 // Import screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -23,8 +26,6 @@ import InsightsScreen from '../screens/InsightsScreen';
 import ProfileScreenDetail from '../screens/ProfileScreenDetail';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
-
-import { colors } from '../constants/colors';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const TaskStack = createNativeStackNavigator<TaskStackParamList>();
@@ -102,10 +103,55 @@ const ProfileStackNavigator = () => (
 
 // Main Tab Navigator
 const MainTabNavigator = () => {
+  const { user } = useAuth();
+  const colors = useDynamicColors();
+
+  const ProfileTabIcon = ({ focused, size }: { focused: boolean; size: number }) => {
+    if (user?.profilePicture) {
+      return (
+        <Image 
+          source={{ uri: user.profilePicture }} 
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: 2,
+            borderColor: focused ? colors.primary : 'transparent',
+          }} 
+        />
+      );
+    }
+    
+    return (
+      <View style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: focused ? colors.primary : 'transparent',
+      }}>
+        <Text style={{
+          color: colors.white,
+          fontSize: size * 0.6,
+          fontWeight: 'bold',
+        }}>
+          {user?.name?.charAt(0).toUpperCase() || 'U'}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
+          if (route.name === 'Profile') {
+            return <ProfileTabIcon focused={focused} size={size} />;
+          }
+
           let iconName: string;
 
           switch (route.name) {
@@ -124,9 +170,6 @@ const MainTabNavigator = () => {
             case 'Analytics':
               iconName = 'analytics';
               break;
-            case 'Profile':
-              iconName = 'person';
-              break;
             default:
               iconName = 'help';
           }
@@ -134,7 +177,7 @@ const MainTabNavigator = () => {
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.gray,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
@@ -149,43 +192,43 @@ const MainTabNavigator = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Home',
         }}
       />
-      <Tab.Screen 
-        name="Tasks" 
+      <Tab.Screen
+        name="Tasks"
         component={TaskStackNavigator}
         options={{
           tabBarLabel: 'Tasks',
         }}
       />
-      <Tab.Screen 
-        name="Email" 
+      <Tab.Screen
+        name="Email"
         component={EmailStackNavigator}
         options={{
           tabBarLabel: 'Email',
         }}
       />
-      <Tab.Screen 
-        name="Calendar" 
+      <Tab.Screen
+        name="Calendar"
         component={CalendarStackNavigator}
         options={{
           tabBarLabel: 'Calendar',
         }}
       />
-      <Tab.Screen 
-        name="Analytics" 
+      <Tab.Screen
+        name="Analytics"
         component={AnalyticsStackNavigator}
         options={{
           tabBarLabel: 'Analytics',
         }}
       />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="Profile"
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',

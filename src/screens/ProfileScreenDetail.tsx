@@ -1,17 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { ProfileScreenDetailProps } from '../types';
 import { Button, Card } from '../components';
 import { colors, spacing, typography } from '../constants/colors';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
 
 const ProfileScreenDetail = ({ navigation }: ProfileScreenDetailProps) => {
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: '👤',
-    subscription: 'premium',
-    joinDate: 'January 2024',
-  };
+  const { user, logout } = useAuth();
+  const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Please log in to view your profile</Text>
+      </View>
+    );
+  }
 
   const stats = [
     { label: 'Tasks Completed', value: '247' },
@@ -26,13 +33,23 @@ const ProfileScreenDetail = ({ navigation }: ProfileScreenDetailProps) => {
         {/* Profile Header */}
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <Text style={styles.avatar}>{user.avatar}</Text>
+            {user.profilePicture ? (
+              <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>{user.name}</Text>
               <Text style={styles.userEmail}>{user.email}</Text>
               <View style={styles.subscriptionBadge}>
                 <Text style={styles.subscriptionText}>
-                  {user.subscription.charAt(0).toUpperCase() + user.subscription.slice(1)} Plan
+                  {user.subscription ?
+                    user.subscription.charAt(0).toUpperCase() + user.subscription.slice(1) : 'Free'
+                  } Plan
                 </Text>
               </View>
             </View>
@@ -53,14 +70,14 @@ const ProfileScreenDetail = ({ navigation }: ProfileScreenDetailProps) => {
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
+
           <TouchableOpacity style={styles.actionItem}>
             <Text style={styles.actionIcon}>⚙️</Text>
             <Text style={styles.actionText}>Settings</Text>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.actionItem}
             onPress={() => navigation.navigate('Settings')}
           >
@@ -68,14 +85,14 @@ const ProfileScreenDetail = ({ navigation }: ProfileScreenDetailProps) => {
             <Text style={styles.actionText}>Notifications</Text>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionItem}>
             <Text style={styles.actionIcon}>🔒</Text>
             <Text style={styles.actionText}>Privacy & Security</Text>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.actionItem}
             onPress={() => navigation.navigate('About')}
           >
@@ -98,9 +115,9 @@ const ProfileScreenDetail = ({ navigation }: ProfileScreenDetailProps) => {
         <View style={styles.section}>
           <Button
             title="Sign Out"
-            onPress={() => {
-              // Handle sign out
-              navigation.reset({
+            onPress={async () => {
+              await logout();
+              rootNavigation.reset({
                 index: 0,
                 routes: [{ name: 'Auth' }],
               });
@@ -135,7 +152,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   avatar: {
-    fontSize: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  avatarText: {
+    ...typography.h2,
+    color: colors.white,
+  },
+  profilePicture: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginRight: spacing.md,
   },
   profileInfo: {
@@ -235,5 +267,11 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     marginBottom: spacing.xl,
+  },
+  errorText: {
+    ...typography.body1,
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: spacing.xxl,
   },
 });

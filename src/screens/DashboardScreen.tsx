@@ -2,10 +2,31 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { DashboardScreenProps, Task, Email, CalendarEvent } from '../types';
 import { Button, TaskCard, Card } from '../components';
-import { colors, spacing, typography, shadows } from '../constants/colors';
+import { spacing, typography, shadows } from '../constants/colors';
+import { useDynamicColors } from '../constants/dynamicColors';
+import { useAuth } from '../context/AuthContext';
 
 const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
+  const { user } = useAuth();
+  const colors = useDynamicColors();
   const [refreshing, setRefreshing] = useState(false);
+
+  const getCurrentDate = () => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getCurrentTime = () => {
+    return new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
@@ -65,8 +86,8 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
       id: '1',
       title: 'Team Meeting',
       description: 'Weekly team sync',
-      startTime: '2026-01-30T09:00:00',
-      endTime: '2026-01-30T10:00:00',
+      startTime: new Date('2026-01-30T09:00:00'),
+      endTime: new Date('2026-01-30T10:00:00'),
       location: 'Conference Room A',
       isAllDay: false,
       category: 'work',
@@ -98,7 +119,7 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -107,36 +128,40 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>Good Morning!</Text>
-          <Text style={styles.subtitle}>Here's your overview for today</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>
+            Hello {user?.name || 'User'}! Welcome 👋
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Set your reminder for today {getCurrentDate()} at {getCurrentTime()}
+          </Text>
         </View>
 
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{incompleteTasks.length}</Text>
-            <Text style={styles.statLabel}>Tasks</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{incompleteTasks.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Tasks</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{unreadEmails.length}</Text>
-            <Text style={styles.statLabel}>Emails</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{unreadEmails.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Emails</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{todayEvents.length}</Text>
-            <Text style={styles.statLabel}>Events</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{todayEvents.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>85%</Text>
-            <Text style={styles.statLabel}>Productivity</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>85%</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Productivity</Text>
           </Card>
         </View>
 
         {/* Today's Tasks */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Tasks</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Tasks')}>
-              <Text style={styles.seeAll}>See All</Text>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
             </TouchableOpacity>
           </View>
           {incompleteTasks.length > 0 ? (
@@ -150,7 +175,7 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
                 completed={task.completed}
                 onPress={() => {
                   toggleTaskComplete(task.id);
-                  navigation.navigate('Tasks', { screen: 'TaskDetail', params: { taskId: task.id } });
+                  navigation.navigate('Tasks' as any, { screen: 'TaskDetail', params: { taskId: task.id } } as any);
                 }}
               />
             ))
@@ -171,7 +196,7 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
           </View>
           {emails.slice(0, 2).map(email => (
             <Card key={email.id} style={styles.emailCard}>
-              <TouchableOpacity onPress={() => navigation.navigate('Email', { screen: 'EmailDetail', params: { emailId: email.id } })}>
+              <TouchableOpacity onPress={() => navigation.navigate('Email' as any, { screen: 'EmailDetail', params: { emailId: email.id } } as any)}>
                 <View style={styles.emailHeader}>
                   <Text style={styles.emailFrom}>{email.from}</Text>
                   <Text style={styles.emailTime}>{email.date}</Text>
@@ -194,7 +219,7 @@ const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
             </View>
             {todayEvents.map(event => (
               <Card key={event.id} style={styles.eventCard}>
-                <TouchableOpacity onPress={() => navigation.navigate('Calendar', { screen: 'EventDetail', params: { eventId: event.id } })}>
+                <TouchableOpacity onPress={() => navigation.navigate('Calendar' as any, { screen: 'EventDetail', params: { eventId: event.id } } as any)}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
                   <Text style={styles.eventTime}>
                     {new Date(event.startTime).toLocaleTimeString('en-US', {
@@ -240,7 +265,6 @@ export default DashboardScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
   },
   scrollView: {
     flex: 1,
@@ -251,12 +275,10 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...typography.h1,
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   subtitle: {
     ...typography.body2,
-    color: colors.textSecondary,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -271,12 +293,11 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     ...typography.h2,
-    color: colors.primary,
     marginBottom: spacing.xs,
   },
   statLabel: {
     ...typography.caption,
-    color: colors.textSecondary,
+    textAlign: 'center',
   },
   section: {
     marginBottom: spacing.lg,
@@ -289,19 +310,18 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
+    fontWeight: '600',
   },
   seeAll: {
-    ...typography.body2,
-    color: colors.primary,
+    ...typography.caption,
+    fontWeight: '500',
   },
   emptyState: {
-    alignItems: 'center',
     padding: spacing.lg,
+    alignItems: 'center',
   },
   emptyStateText: {
     ...typography.body2,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   emailCard: {
@@ -316,22 +336,18 @@ const styles = StyleSheet.create({
   },
   emailFrom: {
     ...typography.body2,
-    color: colors.text,
     fontWeight: '500',
   },
   emailTime: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   emailSubject: {
     ...typography.body2,
-    color: colors.text,
     fontWeight: '500',
     marginBottom: spacing.xs,
   },
   emailPreview: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   eventCard: {
     padding: spacing.md,
@@ -339,18 +355,15 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     ...typography.body2,
-    color: colors.text,
     fontWeight: '500',
     marginBottom: spacing.xs,
   },
   eventTime: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   eventLocation: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
   quickActions: {
     flexDirection: 'row',

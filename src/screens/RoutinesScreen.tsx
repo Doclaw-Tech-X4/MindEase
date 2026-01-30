@@ -132,7 +132,7 @@ const RoutinesScreen = ({ navigation }: RoutinesScreenProps) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Available Routines</Text>
             {inactiveRoutines.map(routine => (
-              <Card key={routine.id} style={[styles.routineCard, styles.inactiveRoutine]}>
+              <Card key={routine.id} style={Object.assign({}, styles.routineCard, styles.inactiveRoutine)}>
                 <View style={styles.routineHeader}>
                   <View style={styles.routineInfo}>
                     <Text style={[styles.routineIcon, styles.inactiveIcon]}>{routine.icon}</Text>

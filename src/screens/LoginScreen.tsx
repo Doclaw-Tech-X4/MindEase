@@ -6,6 +6,7 @@ import { colors, spacing, typography, borderRadius } from '../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [loading, setLoading] = useState(false);
 
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { login } = useAuth();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -34,14 +36,18 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (validateForm()) {
-      setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setLoading(false);
+      try {
+        setLoading(true);
+        await login(email, password);
         rootNavigation.replace('MainTabs');
-      }, 1500);
+      } catch (error) {
+        console.error('Login failed:', error);
+        // Handle login error (show message to user)
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -53,7 +59,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
+          <Text style={styles.subtitle}>Start your wellness journey today with MindEase App we are glad to have you here</Text>
         </View>
 
         <View style={styles.form}>

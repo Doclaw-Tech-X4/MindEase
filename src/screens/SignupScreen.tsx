@@ -3,6 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platfor
 import { SignupScreenProps } from '../types';
 import { Button, Input } from '../components';
 import { colors, spacing, typography } from '../constants/colors';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const SignupScreen = ({ navigation }: SignupScreenProps) => {
   const [name, setName] = useState('');
@@ -11,6 +15,9 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirmPassword?: string }>({});
   const [loading, setLoading] = useState(false);
+
+  const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { signup } = useAuth();
 
   const validateForm = () => {
     const newErrors: { name?: string; email?: string; password?: string; confirmPassword?: string } = {};
@@ -29,8 +36,8 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
 
     if (!password.trim()) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
 
     if (!confirmPassword.trim()) {
@@ -43,14 +50,18 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (validateForm()) {
-      setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        setLoading(true);
+        await signup(name, email, password);
+        rootNavigation.replace('MainTabs');
+      } catch (error) {
+        console.error('Signup failed:', error);
+        // Handle signup error (show message to user)
+      } finally {
         setLoading(false);
-        navigation.replace('MainTabs', { screen: 'Dashboard' });
-      }, 1500);
+      }
     }
   };
 
@@ -62,7 +73,7 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Start your wellness journey today</Text>
+          <Text style={styles.subtitle}>Start your wellness journey today with MindEase App we are glad to have you here</Text>
         </View>
 
         <View style={styles.form}>

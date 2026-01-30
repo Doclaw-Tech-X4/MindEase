@@ -101,10 +101,11 @@ const TaskDetailScreen = ({ navigation }: TaskDetailScreenProps) => {
             title={isCompleted ? 'Mark Incomplete' : 'Mark Complete'}
             onPress={handleMarkComplete}
             loading={loading}
-            style={[
+            style={Object.assign(
+              {},
               styles.completeButton,
-              isCompleted && styles.incompleteButton,
-            ]}
+              isCompleted && styles.incompleteButton
+            )}
           />
           <Button
             title="Edit Task"

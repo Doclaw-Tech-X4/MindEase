@@ -153,7 +153,7 @@ const EmailSettingsScreen = ({ navigation }: EmailSettingsScreenProps) => {
                       onPress={() => handleDisconnectAccount(account.id)}
                       variant="outline"
                       size="small"
-                      style={[styles.actionButton, styles.disconnectButton]}
+                      style={Object.assign({}, styles.actionButton, styles.disconnectButton)}
                     />
                   </>
                 ) : (

@@ -12,16 +12,15 @@ const EventDetailScreen = ({ route, navigation }: EventDetailScreenProps) => {
     id: eventId,
     title: 'Team Meeting',
     description: 'Weekly team sync to discuss project progress, upcoming deadlines, and resource allocation. We will review the current sprint status and plan for the next iteration.',
-    startTime: '2026-01-30T09:00:00',
-    endTime: '2026-01-30T10:00:00',
+    startTime: new Date('2026-01-30T09:00:00'),
+    endTime: new Date('2026-01-30T10:00:00'),
     location: 'Conference Room A',
     isAllDay: false,
     category: 'work',
     attendees: ['john@example.com', 'sarah@example.com', 'mike@example.com'],
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDateTime = (date: Date) => {
     return date.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',

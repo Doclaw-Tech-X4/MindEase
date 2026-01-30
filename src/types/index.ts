@@ -144,8 +144,8 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  startTime: string;
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
   location?: string;
   isAllDay: boolean;
   category?: 'work' | 'personal' | 'health' | 'other';

@@ -36,7 +36,7 @@ const Input: React.FC<InputProps> = ({
             style,
           ].filter(Boolean)}
           placeholderTextColor={colors.gray}
-          disabled={disabled}
+          editable={!disabled}
           {...props}
         />
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}

@@ -1,74 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { CalendarViewScreenProps, CalendarEvent } from '../types';
 import { Button, Card } from '../components';
 import { colors, spacing, typography } from '../constants/colors';
+import calendarService from '../services/calendarService';
+import { Calendar } from 'react-native-calendars';
 
 const CalendarViewScreen = ({ navigation }: CalendarViewScreenProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Team Meeting',
-      description: 'Weekly team sync to discuss project progress',
-      startTime: '2026-01-30T09:00:00',
-      endTime: '2026-01-30T10:00:00',
-      location: 'Conference Room A',
-      isAllDay: false,
-      category: 'work',
-      attendees: ['john@example.com', 'sarah@example.com'],
-    },
-    {
-      id: '2',
-      title: 'Lunch with Client',
-      description: 'Discuss new project requirements',
-      startTime: '2026-01-30T12:30:00',
-      endTime: '2026-01-30T14:00:00',
-      location: 'Downtown Restaurant',
-      isAllDay: false,
-      category: 'work',
-      attendees: ['client@company.com'],
-    },
-    {
-      id: '3',
-      title: 'Gym Session',
-      description: 'Evening workout routine',
-      startTime: '2026-01-30T18:00:00',
-      endTime: '2026-01-30T19:00:00',
-      location: 'Fitness Center',
-      isAllDay: false,
-      category: 'health',
-    },
-    {
-      id: '4',
-      title: 'Project Deadline',
-      description: 'Submit final project deliverables',
-      startTime: '2026-01-31T23:59:00',
-      endTime: '2026-01-31T23:59:00',
-      isAllDay: true,
-      category: 'work',
-    },
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [markedDates, setMarkedDates] = useState<any>({});
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
+  useEffect(() => {
+    initializeCalendar();
+  }, []);
+
+  const initializeCalendar = async () => {
+    try {
+      // Get user location
+      const location = await calendarService.getCurrentLocation();
+      setUserLocation(location);
+
+      // Load calendar events
+      await loadCalendarEvents();
+    } catch (error) {
+      console.error('Error initializing calendar:', error);
+    }
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+  const loadCalendarEvents = async () => {
+    try {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
+      const calendarEvents = await calendarService.getEvents(startOfMonth, endOfMonth);
+      setEvents(calendarEvents);
+
+      // Mark dates with events
+      const marked: any = {};
+      calendarEvents.forEach(event => {
+        const dateStr = new Date(event.startTime).toISOString().split('T')[0];
+        marked[dateStr] = {
+          marked: true,
+          dotColor: getCategoryColor(event.category),
+        };
+      });
+      setMarkedDates(marked);
+    } catch (error) {
+      console.error('Error loading calendar events:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadCalendarEvents();
+    } catch (error) {
+      console.error('Error refreshing calendar:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -107,7 +113,12 @@ const CalendarViewScreen = ({ navigation }: CalendarViewScreenProps) => {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Calendar</Text>
-          <Text style={styles.currentDate}>{formatDate(selectedDate)}</Text>
+          <Text style={styles.currentDate}>
+            {userLocation ?
+              `${userLocation.city || 'Current Location'} (${userLocation.timezone})` :
+              formatDate(selectedDate)
+            }
+          </Text>
         </View>
 
         {/* Quick Stats */}
@@ -123,6 +134,31 @@ const CalendarViewScreen = ({ navigation }: CalendarViewScreenProps) => {
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>{events.length}</Text>
             <Text style={styles.statLabel}>Total</Text>
+          </Card>
+        </View>
+
+        {/* Calendar View */}
+        <View style={styles.calendarSection}>
+          <Text style={styles.sectionTitle}>Calendar</Text>
+          <Card style={styles.calendarCard}>
+            <Calendar
+              current={selectedDate.toISOString().split('T')[0]}
+              onDayPress={(day) => setSelectedDate(new Date(day.timestamp))}
+              markedDates={markedDates}
+              theme={{
+                backgroundColor: colors.background,
+                calendarBackground: colors.background,
+                textSectionTitleColor: colors.text,
+                selectedDayBackgroundColor: colors.primary,
+                selectedDayTextColor: colors.white,
+                todayTextColor: colors.primary,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textSecondary,
+                arrowColor: colors.primary,
+                monthTextColor: colors.text,
+                indicatorColor: colors.primary,
+              }}
+            />
           </Card>
         </View>
 
@@ -149,17 +185,17 @@ const CalendarViewScreen = ({ navigation }: CalendarViewScreenProps) => {
                       { backgroundColor: getCategoryColor(event.category) }
                     ]} />
                   </View>
-                  
+
                   <Text style={styles.eventTitle}>{event.title}</Text>
-                  
+
                   {event.description && (
                     <Text style={styles.eventDescription}>{event.description}</Text>
                   )}
-                  
+
                   {event.location && (
                     <Text style={styles.eventLocation}>📍 {event.location}</Text>
                   )}
-                  
+
                   {event.attendees && event.attendees.length > 0 && (
                     <Text style={styles.eventAttendees}>
                       👥 {event.attendees.length} attendees
@@ -261,6 +297,12 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  calendarSection: {
+    marginBottom: spacing.lg,
+  },
+  calendarCard: {
+    padding: spacing.sm,
   },
   eventCard: {
     padding: spacing.md,

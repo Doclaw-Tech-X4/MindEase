@@ -105,11 +105,11 @@ const InboxScreen = ({ navigation }: InboxScreenProps) => {
           {emails.map(email => (
             <Card
               key={email.id}
-              style={[
+              style={StyleSheet.flatten([
                 styles.emailCard,
                 !email.isRead && styles.unreadCard,
                 email.isImportant && styles.importantCard,
-              ]}
+              ])}
             >
               <TouchableOpacity
                 onPress={() => {
